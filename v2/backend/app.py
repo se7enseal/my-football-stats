@@ -2,6 +2,7 @@
 import os
 import json
 from datetime import datetime
+import time
 
 import requests
 from flask import Flask, Response, request
@@ -17,6 +18,24 @@ app = Flask(__name__)
 API_KEY = (os.environ.get("API_SPORTS_KEY") or "").strip()
 API_HOST = "v3.football.api-sports.io"
 FIXTURES_URL = f"https://{API_HOST}/fixtures"
+
+_CACHE = {}
+
+
+def _cache_get(key):
+    item = _CACHE.get(key)
+    if not item:
+        return None
+    expires_at, value = item
+    if time.time() >= expires_at:
+        _CACHE.pop(key, None)
+        return None
+    return value
+
+
+def _cache_set(key, value, ttl_seconds: int):
+    _CACHE[key] = (time.time() + ttl_seconds, value)
+
 
 @app.after_request
 def add_cors_headers(resp):
@@ -99,12 +118,29 @@ def fixtures():
         except ValueError:
             return json_utf8({"error": "invalid league"}, status=400)
 
-    resp = requests.get(FIXTURES_URL, headers=api_headers(), params=params, timeout=20)
-    if resp.status_code >= 400:
-        return json_utf8({"error": f"upstream {resp.status_code}", "body": resp.text[:500]}, status=502)
+    cache_bucket = "live" if status == "live" else "normal"
+    cache_key = ("fixtures", cache_bucket, date_str, params.get("league") or 0)
+    cached_raw = _cache_get(cache_key)
 
-    data = resp.json()
-    raw = data.get("response", [])
+    if cached_raw is None:
+        resp = requests.get(FIXTURES_URL, headers=api_headers(), params=params, timeout=20)
+
+        # API-Sports 限流时（429），优先回退到旧缓存（如果有），避免前端直接失败
+        if resp.status_code == 429:
+            stale = _CACHE.get(cache_key)
+            if stale:
+                _, stale_value = stale
+                raw = stale_value
+            else:
+                return json_utf8({"error": "upstream 429 (rate limited)"}, status=429)
+        elif resp.status_code >= 400:
+            return json_utf8({"error": f"upstream {resp.status_code}", "body": resp.text[:500]}, status=502)
+        else:
+            data = resp.json()
+            raw = data.get("response", [])
+            _cache_set(cache_key, raw, 20 if cache_bucket == "live" else 600)
+    else:
+        raw = cached_raw
 
     hot_ids = {x["id"] for x in HOT_LEAGUES}
     out = []
