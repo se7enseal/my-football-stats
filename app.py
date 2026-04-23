@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from datetime import datetime
 import os
 
@@ -8,22 +8,28 @@ app = Flask(__name__)
 API_KEY = "5c7fe8c9bed7f735946cd1175d2841c3"
 API_URL = "https://v3.football.api-sports.io/fixtures"
 
-# 常用球队/联赛中文映射表（你可以根据需要随时在这里添加）
-CN_MAP = {
-    "Premier League": "英超", "La Liga": "西甲", "Serie A": "意甲", "Bundesliga": "德甲",
-    "Real Madrid": "皇家马德里", "Barcelona": "巴塞罗那", "Manchester City": "曼城",
-    "Arsenal": "阿森纳", "Liverpool": "利物浦", "Manchester United": "曼联",
-    "Chelsea": "切尔西", "Bayern Munich": "拜仁慕尼黑", "AC Milan": "AC米兰"
-}
+# --- 目标联赛 ID 库 ---
+# 欧冠(2), 英超(39), 西甲(140), 意甲(135), 德甲(78), 法甲(61)
+# 葡超(94), 比甲(144), 德乙(79), 法乙(62), 日职联(98), 日职乙(99)
+TARGET_LEAGUES = [2, 39, 140, 135, 78, 61, 94, 144, 79, 62, 98, 99]
 
-def to_cn(name):
-    return CN_MAP.get(name, name)
+CN_MAP = {
+    "Champions League": "欧冠", "Premier League": "英超", "La Liga": "西甲", 
+    "Serie A": "意甲", "Bundesliga": "德甲", "Ligue 1": "法甲",
+    "Primeira Liga": "葡超", "J1 League": "日职联", "J2 League": "日职乙",
+    "2. Bundesliga": "德乙", "Ligue 2": "法乙", "Belgian Pro League": "比甲"
+}
 
 @app.route('/')
 def index():
     headers = {'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
+    
+    # 自动校准北京时间
     today = datetime.now().strftime('%Y-%m-%d')
-    params = {'date': today, 'timezone': 'Asia/Shanghai'}
+    params = {'date': today, 'timezone': 'Asia/Shanghai'} # 强制 API 层面校准
+    
+    # 获取筛选参数（左侧点击时使用）
+    league_filter = request.args.get('league')
     
     matches = []
     try:
@@ -33,27 +39,34 @@ def index():
         
         for item in results:
             f, t, l = item['fixture'], item['teams'], item['league']
+            l_id = l['id']
             
-            # 过滤：只看还没开始或进行中的
-            if f['status']['short'] in ['NS', '1H', '2H', 'HT']:
-                h_name = to_cn(t['home']['name'])
-                a_name = to_cn(t['away']['name'])
-                l_name = to_cn(l['name'])
+            # --- 核心过滤逻辑 ---
+            # 1. 必须在目标联赛名单内
+            # 2. 如果用户点击了左侧筛选，则额外匹配该 ID
+            if l_id in TARGET_LEAGUES:
+                if league_filter and str(l_id) != league_filter:
+                    continue
+                
+                h_name = CN_MAP.get(t['home']['name'], t['home']['name'])
+                a_name = CN_MAP.get(t['away']['name'], t['away']['name'])
+                l_name = CN_MAP.get(l['name'], l['name'])
                 
                 matches.append({
-                    "time": f['date'].replace('T', ' ')[:16], # 这里保留了年月日
+                    "id": f['id'],
+                    "time": f['date'].replace('T', ' ')[:16],
                     "league": l_name,
                     "home": h_name, "home_logo": t['home']['logo'],
                     "away": a_name, "away_logo": t['away']['logo'],
                     "prediction": "主不败" if f['id'] % 2 == 0 else "看好客队",
-                    # 动态生成战绩描述，不再死磕英超
-                    "analysis": f"今日 {l_name} 焦点战。{h_name} 近期主场胜率稳定，面对 {a_name} 的防线压力较小。",
-                    "history": [
-                        {"date": "近期", "home": h_name, "score": "VS", "away": a_name, "res": "待战"}
-                    ]
+                    "analysis": f"本场 {l_name} 赛事由 {h_name} 对阵 {a_name}。系统已校准北京时间，建议关注即时指数波动。"
                 })
+        
+        # 排序：按时间先后顺序排列
+        matches = sorted(matches, key=lambda x: x['time'])
+                
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"数据抓取失败: {e}")
 
     return render_template('index.html', matches=matches)
 

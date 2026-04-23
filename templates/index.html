@@ -2,119 +2,82 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatsPro | 足球大数据</title>
+    <title>StatsPro | 足球赛事监控</title>
     <link href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* 强制全屏布局，防止排版塌陷 */
-        html, body { height: 100%; margin: 0; padding: 0; background: #f4f7f9; }
-        .wrapper { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-        
-        /* 左侧固定的深色侧边栏 */
-        .sidebar { 
-            width: 260px; background: #001529; color: white; 
-            display: flex; flex-direction: column; flex-shrink: 0; padding: 25px 15px;
-        }
-        .sidebar h4 { font-weight: bold; color: #fff; margin-bottom: 30px; text-align: center; }
-        .sidebar .nav-link { 
-            color: rgba(255,255,255,0.7); padding: 12px 15px; margin-bottom: 8px;
-            border-radius: 6px; text-decoration: none; transition: 0.3s; display: block;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #1890ff; color: #fff; }
-
-        /* 右侧可滚动的列表区 */
-        .main-content { flex-grow: 1; overflow-y: auto; padding: 30px; }
-        .match-card { background: white; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e8e8e8; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        /* 列表行对齐 */
-        .match-row { display: flex; align-items: center; padding: 20px; }
-        .col-league { width: 120px; font-size: 13px; color: #999; font-weight: 500; }
-        .col-time { width: 150px; font-size: 14px; color: #333; }
-        .col-teams { flex-grow: 1; display: flex; justify-content: center; align-items: center; font-weight: 600; font-size: 16px; }
-        .team-box { width: 160px; display: flex; align-items: center; }
-        .col-predict { width: 120px; text-align: center; color: #ff4d4f; font-weight: bold; }
-        .col-action { width: 100px; text-align: right; }
-
-        /* 详情展开区美化 */
-        .detail-panel { display: none; padding: 20px; background: #fafafa; border-top: 1px solid #f0f0f0; border-radius: 0 0 10px 10px; }
-        .stat-badge { background: #e6f7ff; color: #1890ff; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
-        
-        .btn-detail { border-radius: 20px; padding: 4px 15px; font-size: 13px; }
+        body { background: #f0f2f5; font-family: 'PingFang SC', sans-serif; }
+        .wrapper { display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #001529; color: white; flex-shrink: 0; padding: 20px; }
+        .main { flex-grow: 1; padding: 30px; }
+        .sidebar a { color: rgba(255,255,255,0.7); text-decoration: none; display: block; padding: 10px; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #1890ff; color: white; }
+        .match-card { background: white; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e1e4e8; transition: 0.3s; }
+        .match-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .row-main { display: flex; align-items: center; padding: 15px 25px; }
+        .col-league { width: 100px; color: #8c8c8c; font-size: 13px; }
+        .col-time { width: 140px; font-weight: 500; }
+        .col-vs { flex-grow: 1; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: bold; }
+        .col-predict { width: 100px; color: #ff4d4f; font-weight: bold; text-align: center; }
+        .detail-box { display: none; padding: 20px; background: #fafafa; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
-
 <div class="wrapper">
     <div class="sidebar">
-        <h4>StatsPro</h4>
-        <div class="mb-4">
-            <p class="small px-3 text-muted">赛事筛选</p>
-            <a href="/" class="nav-link active">全部赛事</a>
-            <a href="/?league=39" class="nav-link">英格兰超级联赛</a>
-            <a href="/?league=140" class="nav-link">西班牙足球甲级联赛</a>
-            <a href="/?league=78" class="nav-link">德国足球甲级联赛</a>
-            <a href="/?league=135" class="nav-link">意大利足球甲级联赛</a>
-        </div>
+        <h4 class="mb-4">赛事筛选</h4>
+        <a href="/" class="active">全部热门赛事</a>
+        <hr>
+        <a href="/?league=39">英超联赛</a>
+        <a href="/?league=140">西甲联赛</a>
+        <a href="/?league=78">德甲联赛</a>
+        <a href="/?league=2">欧冠杯</a>
+        <a href="/?league=98">日职联</a>
+        <a href="/?league=94">葡超联赛</a>
     </div>
-
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold m-0">实时赛事分析预测</h5>
-            <div class="text-muted small">更新于: 2026-04-23</div>
+    <div class="main">
+        <div class="d-flex justify-content-between mb-4">
+            <h3>实时分析看板</h3>
+            <span class="badge bg-primary pt-2">北京时间 (UTC+8)</span>
         </div>
-
-        <div class="match-list">
-            {% for m in matches %}
-            <div class="match-card">
-                <div class="match-row">
-                    <div class="col-league">{{ m.league }}</div>
-                    <div class="col-time">{{ m.time }}</div>
-                    <div class="col-teams">
-                        <div class="team-box justify-content-end">
-                            <span>{{ m.home }}</span>
-                            <img src="{{ m.home_logo }}" width="28" class="ms-2">
-                        </div>
-                        <span class="mx-4 text-muted" style="font-size: 12px;">VS</span>
-                        <div class="team-box justify-content-start">
-                            <img src="{{ m.away_logo }}" width="28" class="me-2">
-                            <span>{{ m.away }}</span>
-                        </div>
-                    </div>
-                    <div class="col-predict">{{ m.prediction }}</div>
-                    <div class="col-action">
-                        <button class="btn btn-primary btn-detail" onclick="toggle('{{ m.id }}')">数据详情</button>
-                    </div>
+        
+        {% for m in matches %}
+        <div class="match-card">
+            <div class="row-main">
+                <div class="col-league">{{ m.league }}</div>
+                <div class="col-time">{{ m.time[-5:] }}</div>
+                <div class="col-vs">
+                    <span>{{ m.home }}</span>
+                    <img src="{{ m.home_logo }}" width="24" class="mx-3">
+                    <span class="text-muted small mx-2">VS</span>
+                    <img src="{{ m.away_logo }}" width="24" class="mx-3">
+                    <span>{{ m.away }}</span>
                 </div>
-
-                <div id="box-{{ m.id }}" class="detail-panel">
-                    <div class="row">
-                        <div class="col-md-7">
-                            <div class="mb-3"><span class="stat-badge">战绩概览</span></div>
-                            <p class="small text-muted">主队 【{{ m.home }}】 近5场：胜 / 平 / 胜 / 负 / 胜</p>
-                            <p class="small text-muted">客队 【{{ m.away }}】 近5场：负 / 负 / 平 / 胜 / 负</p>
-                        </div>
-                        <div class="col-md-5 border-start">
-                            <div class="mb-3"><span class="stat-badge">AI 核心建议</span></div>
-                            <p class="small mb-2">{{ m.analysis }}</p>
-                            <div class="text-danger fw-bold">推荐方向：{{ m.prediction }}</div>
-                        </div>
+                <div class="col-predict">{{ m.prediction }}</div>
+                <div class="ms-3">
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggle('{{ m.id }}')">详情</button>
+                </div>
+            </div>
+            <div id="box-{{ m.id }}" class="detail-box">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📋 赛事分析</h6>
+                        <p class="small">{{ m.analysis }}</p>
+                    </div>
+                    <div class="col-md-6 border-start">
+                        <h6>📊 建议方向</h6>
+                        <div class="text-danger fw-bold">{{ m.prediction }}</div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
 </div>
-
 <script>
     function toggle(id) {
-        let el = document.getElementById('box-' + id);
-        let all = document.querySelectorAll('.detail-panel');
-        // 关闭其他，只看一个
-        all.forEach(p => { if(p.id !== 'box-'+id) p.style.display = 'none'; });
+        const el = document.getElementById('box-' + id);
         el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 </script>
-
 </body>
 </html>
