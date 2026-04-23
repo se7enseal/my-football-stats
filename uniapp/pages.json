@@ -1,0 +1,23 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "365Score 实时比分"
+      }
+    },
+    {
+      "path": "pages/match/detail",
+      "style": {
+        "navigationBarTitleText": "比赛详情"
+      }
+    },
+    {
+      "path": "pages/history/index",
+      "style": {
+        "navigationBarTitleText": "比分回查"
+      }
+    }
+  ]
+}
+
