@@ -5,7 +5,8 @@ import os
 
 app = Flask(__name__)
 
-API_KEY = "5c7fe8c9bed7f735946cd1175d2841c3"
+# 优先使用环境变量，未配置时回退到默认值（便于本地直接运行）
+API_KEY = os.environ.get("API_SPORTS_KEY", "").strip() or "5c7fe8c9bed7f735946cd1175d2841c3"
 API_URL = "https://v3.football.api-sports.io/fixtures"
 
 # 目标联赛 ID
@@ -25,6 +26,13 @@ def to_cn(name):
 
 @app.route('/')
 def index():
+    matches = []
+    error = None
+
+    if not API_KEY:
+        error = "缺少 API Key：请设置环境变量 API_SPORTS_KEY"
+        return render_template('index.html', matches=matches, error=error)
+
     headers = {'x-apisports-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
     
     # 策略升级：同时抓取今天和明天的比赛，解决跨时区深夜场次缺失问题
@@ -40,10 +48,10 @@ def index():
         for date_str in dates_to_fetch:
             params = {'date': date_str, 'timezone': 'Asia/Shanghai'}
             response = requests.get(API_URL, headers=headers, params=params, timeout=10)
+            response.raise_for_status()
             data = response.json()
             all_raw_matches.extend(data.get('response', []))
         
-        matches = []
         for item in all_raw_matches:
             f, t, l = item['fixture'], item['teams'], item['league']
             
@@ -68,9 +76,9 @@ def index():
         matches = sorted(matches, key=lambda x: x['time'])
                 
     except Exception as e:
-        print(f"Error: {e}")
+        error = f"拉取比赛数据失败：{e}"
 
-    return render_template('index.html', matches=matches)
+    return render_template('index.html', matches=matches, error=error)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

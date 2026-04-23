@@ -39,6 +39,12 @@
             <h3>实时分析看板</h3>
             <span class="badge bg-primary pt-2">北京时间 (UTC+8)</span>
         </div>
+
+        {% if error %}
+        <div class="alert alert-warning" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
         
         {% for m in matches %}
         <div class="match-card">
