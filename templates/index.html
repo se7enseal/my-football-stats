@@ -3,79 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatsUltra 中文预测版</title>
+    <title>专业足球预测分析</title>
     <link href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --main-bg: #f4f7f6; --card-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        body { background-color: var(--main-bg); font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #333; }
-        .navbar { background: #1a237e; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .match-card { 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: var(--card-shadow); 
-            transition: transform 0.3s;
-            border: none;
-            overflow: hidden;
-        }
-        .match-card:hover { transform: translateY(-5px); }
-        .league-badge { background: #e8eaf6; color: #1a237e; font-weight: bold; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
-        .prob-bar-container { height: 12px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .team-name { font-weight: 800; font-size: 1.2rem; }
-        .vs-text { color: #999; font-style: italic; font-weight: bold; }
-        .pred-box { background: #fff9c4; border-radius: 8px; padding: 4px 10px; font-weight: bold; color: #f57f17; }
+        body { background-color: #f0f2f5; font-family: system-ui, -apple-system, sans-serif; }
+        .filter-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .match-card { background: white; border-radius: 15px; border: none; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .card-header { background: #1a237e; color: white; border-radius: 15px 15px 0 0 !important; font-size: 0.9rem; padding: 10px 20px; }
+        .odds-badge { background: #f8f9fa; border: 1px solid #dee2e6; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .pred-tag { background: #ffeb3b; color: #000; padding: 4px 12px; border-radius: 6px; font-weight: bold; }
+        .analysis-text { background: #e3f2fd; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #0d47a1; }
+        .info-label { color: #888; font-size: 0.8rem; margin-bottom: 2px; }
+        .info-content { font-size: 0.85rem; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark mb-5">
-    <div class="container">
-        <a class="navbar-brand" href="#">⚽ StatsUltra 中文克隆版</a>
+<div class="container py-4">
+    <h3 class="mb-4 text-center">⚽ 专业足球预测分析系统</h3>
+
+    <div class="filter-bar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <span class="me-2 fw-bold">日期筛选:</span>
+            <input type="date" class="form-control form-control-sm" value="2026-04-23">
+        </div>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary active">全部比赛</button>
+            <button class="btn btn-outline-primary">英超</button>
+            <button class="btn btn-outline-primary">西甲</button>
+        </div>
     </div>
-</nav>
 
-<div class="container">
-    <div class="row justify-content-center">
+    <div class="row">
         {% for match in matches %}
-        <div class="col-lg-7 col-md-9 mb-4">
-            <div class="card match-card p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="league-badge">{{ match.league }}</span>
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted small me-2">AI 预测:</span>
-                        <span class="pred-box">{{ match.prediction }}</span>
-                    </div>
+        <div class="col-12 mb-4">
+            <div class="card match-card">
+                <div class="card-header d-flex justify-content-between">
+                    <span>{{ match.league }} | {{ match.time }}</span>
+                    <span class="text-warning">已开盘</span>
                 </div>
-                
-                <div class="row align-items-center text-center">
-                    <div class="col-5">
-                        <div class="team-name">{{ match.home }}</div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <h4 class="fw-bold mb-1">{{ match.home }}</h4>
+                            <div class="text-muted small">主场</div>
+                        </div>
+                        <div class="col-md-1 text-center">
+                            <span class="fs-4 fw-light text-muted">VS</span>
+                        </div>
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <h4 class="fw-bold mb-1">{{ match.away }}</h4>
+                            <div class="text-muted small">客场</div>
+                        </div>
+                        <div class="col-md-3 text-center border-start">
+                            <div class="info-label">AI 预测</div>
+                            <div class="pred-tag d-inline-block">{{ match.prediction }}</div>
+                        </div>
                     </div>
-                    <div class="col-2 vs-text">VS</div>
-                    <div class="col-5">
-                        <div class="team-name">{{ match.away }}</div>
-                    </div>
-                </div>
 
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between small text-muted mb-2">
-                        <span>胜 {{ match.win_prob }}</span>
-                        <span>平 {{ match.draw_prob }}</span>
-                        <span>负 {{ match.loss_prob }}</span>
-                    </div>
-                    <div class="progress prob-bar-container">
-                        <div class="progress-bar bg-success" style="width: {{ match.win_prob }}"></div>
-                        <div class="progress-bar bg-warning" style="width: {{ match.draw_prob }}"></div>
-                        <div class="progress-bar bg-danger" style="width: {{ match.loss_prob }}"></div>
+                    <hr>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="info-label">欧指赔率 (胜/平/负)</div>
+                            <div class="mb-3">
+                                <span class="odds-badge me-2">{{ match.home_odds }}</span>
+                                <span class="odds-badge me-2">{{ match.draw_odds }}</span>
+                                <span class="odds-badge">{{ match.away_odds }}</span>
+                            </div>
+                            <div class="info-label">伤停信息</div>
+                            <div class="info-content text-danger">{{ match.injuries }}</div>
+                            <div class="info-label">预计阵容</div>
+                            <div class="info-content">{{ match.lineup }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">胜率分布</div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: {{ match.win_prob }}"></div>
+                                <div class="progress-bar bg-warning" style="width: {{ match.draw_prob }}"></div>
+                                <div class="progress-bar bg-danger" style="width: {{ match.loss_prob }}"></div>
+                            </div>
+                            <div class="info-label">文字分析</div>
+                            <div class="analysis-text">
+                                {{ match.analysis }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    
-    <footer class="text-center text-muted mt-5 pb-5">
-        <p>© 2026 足球统计数据分析平台</p>
-    </footer>
 </div>
 
 </body>
