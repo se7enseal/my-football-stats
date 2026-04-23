@@ -18,6 +18,15 @@ API_KEY = (os.environ.get("API_SPORTS_KEY") or "").strip()
 API_HOST = "v3.football.api-sports.io"
 FIXTURES_URL = f"https://{API_HOST}/fixtures"
 
+@app.after_request
+def add_cors_headers(resp):
+    # 允许 H5（localhost）和未来小程序/H5 域名请求
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    resp.headers["Access-Control-Max-Age"] = "86400"
+    return resp
+
 HOT_LEAGUES = [
     {"id": 39, "name": "\u82f1\u8d85"},
     {"id": 140, "name": "\u897f\u7532"},
