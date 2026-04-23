@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
@@ -5,6 +6,7 @@ import os
 import time
 
 app = Flask(__name__)
+app.json.ensure_ascii = False
 
 # 优先使用环境变量，未配置时回退到默认值（便于本地直接运行）
 API_KEY = os.environ.get("API_SPORTS_KEY", "").strip() or "5c7fe8c9bed7f735946cd1175d2841c3"
