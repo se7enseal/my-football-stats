@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import requests
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, Response
 from datetime import datetime, timedelta
 import os
 import time
+import json
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -78,6 +79,13 @@ def cache_get(key):
 
 def cache_set(key, value, ttl_seconds: int):
     _CACHE[key] = (time.time() + ttl_seconds, value)
+
+def json_response(payload, status: int = 200):
+    """
+    Render/浏览器有时会把 JSON 按错误编码解读，显式声明 UTF-8 可避免中文乱码。
+    """
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    return Response(body, status=status, content_type="application/json; charset=utf-8")
 
 def fetch_fixtures(date_str: str, league_id: int | None, status: str):
     """
@@ -192,7 +200,7 @@ def index():
 
 @app.route("/api/leagues/hot")
 def api_hot_leagues():
-    return jsonify({"leagues": HOT_LEAGUES})
+    return json_response({"leagues": HOT_LEAGUES})
 
 @app.route("/api/leagues/search")
 def api_league_search():
@@ -201,7 +209,7 @@ def api_league_search():
     """
     q = (request.args.get("q") or "").strip()
     if not q:
-        return jsonify({"error": "missing q"}), 400
+        return json_response({"error": "missing q"}, status=400)
 
     params = {"search": q}
     resp = requests.get(LEAGUES_URL, headers=api_headers(), params=params, timeout=15)
@@ -219,7 +227,7 @@ def api_league_search():
                 "country": to_cn(country.get("name", "")),
             }
         )
-    return jsonify({"q": q, "results": out[:50]})
+    return json_response({"q": q, "results": out[:50]})
 
 @app.route("/api/fixtures")
 def api_fixtures():
@@ -227,20 +235,20 @@ def api_fixtures():
     league_raw = (request.args.get("league") or "").strip()
     status = (request.args.get("status") or "all").strip().lower()
     if status not in {"all", "live", "ns", "ft"}:
-        return jsonify({"error": "invalid status"}), 400
+        return json_response({"error": "invalid status"}, status=400)
 
     league_id = None
     if league_raw:
         try:
             league_id = int(league_raw)
         except ValueError:
-            return jsonify({"error": "invalid league"}), 400
+            return json_response({"error": "invalid league"}, status=400)
 
     try:
         fixtures = fetch_fixtures(date_str, league_id, status)
-        return jsonify({"date": date_str, "timezone": "Asia/Shanghai", "fixtures": fixtures})
+        return json_response({"date": date_str, "timezone": "Asia/Shanghai", "fixtures": fixtures})
     except Exception as e:
-        return jsonify({"error": f"fetch failed: {e}"}), 502
+        return json_response({"error": f"fetch failed: {e}"}, status=502)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
